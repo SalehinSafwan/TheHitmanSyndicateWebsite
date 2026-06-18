@@ -5,6 +5,8 @@ namespace App\Models;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Database\Factories\UserFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -19,6 +21,9 @@ class User extends Authenticatable
      * @var list<string>
      */
     protected $fillable = [
+        'codename',
+        'specialty',
+        'role',
         'name',
         'email',
         'password',
@@ -46,16 +51,44 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-            public function roles() {
-            return $this->belongsToMany(Role::class);
+
+    public function roles(): BelongsToMany
+    {
+        return $this->belongsToMany(Role::class);
+    }
+
+    public function contracts(): HasMany
+    {
+        return $this->hasMany(Contract::class, 'hitman_id');
+    }
+
+    public function bookings(): HasMany
+    {
+        return $this->hasMany(Booking::class, 'hitman_id');
+    }
+
+    public function hasRole(string $roleName): bool
+    {
+        return $this->role === $roleName || $this->roles()->where('name', $roleName)->exists();
+    }
+
+    public function hasAnyRole(array $roleNames): bool
+    {
+        foreach ($roleNames as $roleName) {
+            if ($this->hasRole($roleName)) {
+                return true;
+            }
         }
 
-        public function contracts() {
-            return $this->hasMany(Contract::class, 'hitman_id');
-        }
+        return false;
+    }
 
-        public function bookings() {
-            return $this->hasMany(Booking::class, 'hitman_id');
-        }
+    public function assignRole(string $roleName): void
+    {
+        $role = Role::firstOrCreate(['name' => $roleName]);
 
+        $this->roles()->syncWithoutDetaching($role->id);
+        $this->role = $roleName;
+        $this->save();
+    }
 }
