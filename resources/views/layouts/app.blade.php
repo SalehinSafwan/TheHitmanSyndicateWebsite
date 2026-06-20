@@ -32,5 +32,14 @@
                 {{ $slot }}
             </main>
         </div>
+        <!-- Background Music -->
+        <div style="display:none;">
+            <iframe id="bg-music" width="0" height="0"
+                src="@yield('bg-music', 'https://www.youtube.com/embed/iWP6o9LCKn8?autoplay=1&loop=1&playlist=iWP6o9LCKn8')"
+                frameborder="0" allow="autoplay">
+            </iframe>
+        </div>
+
+
     </body>
 </html>
