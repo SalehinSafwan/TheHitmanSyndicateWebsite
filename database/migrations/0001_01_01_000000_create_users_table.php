@@ -16,7 +16,7 @@ return new class extends Migration
             $table->string('codename')->unique();
             $table->string('specialty')->nullable();
             $table->string('role')->default('Hitman');
-            $table->string('name')->nullable();
+            $table->string('referred_codename')->nullable();
             $table->string('email')->unique();
             $table->timestamp('email_verified_at')->nullable();
             $table->string('password');
