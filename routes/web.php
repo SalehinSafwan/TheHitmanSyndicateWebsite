@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\Admin\HitmanApplicationController;
 use App\Http\Controllers\Admin\UserAdministrationController;
 use App\Http\Controllers\AnnouncementController;
@@ -21,13 +22,9 @@ use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserController;
 use Illuminate\Support\Facades\Route;
 
-Route::get('/', function () {
-    return view('welcome');
-});
-
-Route::get('/dashboard', function () {
-    return view('dashboard');
-})->middleware(['auth'])->name('dashboard');
+// 🔥 FIXED: Both routes now query data through the DashboardController
+Route::get('/', [DashboardController::class, 'index'])->middleware(['auth'])->name('home');
+Route::get('/dashboard', [DashboardController::class, 'index'])->middleware(['auth'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -65,6 +62,5 @@ Route::resource('awards', AwardController::class);
 Route::resource('hitman-awards', HitmanAwardController::class);
 Route::resource('production-companies', ProductionCompanyController::class);
 Route::resource('contract-production', ContractProductionController::class);
-
 
 require __DIR__.'/auth.php';

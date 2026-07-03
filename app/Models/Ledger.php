@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Model;
 
 class Ledger extends Model
 {
+    protected $table = 'ledger';
     protected $fillable = ['contract_id','hitman_id','amount','paid_at'];
 
     public function contract() {

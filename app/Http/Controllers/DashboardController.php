@@ -1,0 +1,32 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Contract;
+use App\Models\Ledger;
+use App\Models\Announcement;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB; 
+
+class DashboardController extends Controller
+{
+    public function index()
+    {
+        $user = Auth::user();
+
+        
+        $contracts = Contract::where('user_id', $user->id)->get();
+        
+        // Sum amounts from ledger where the associated contract is completed
+        $totalEarnings = DB::table('ledger')
+            ->join('contracts', 'ledger.contract_id', '=', 'contracts.id')
+            ->where('ledger.hitman_id', $user->id)
+            ->where('contracts.status', 'completed')
+            ->sum('ledger.amount'); // Calculates sum of all matching transaction amounts
+            
+        $announcements = Announcement::latest()->take(5)->get();
+
+        return view('dashboard', compact('contracts', 'totalEarnings', 'announcements'));
+    }
+}
