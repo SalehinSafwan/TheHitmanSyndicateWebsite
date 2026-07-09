@@ -14,8 +14,9 @@ class DashboardController extends Controller
     public function index()
     {
         $user = Auth::user();
-
         
+        $user->load('hitmanApplication');
+
         $contracts = Contract::where('user_id', $user->id)->get();
         
         // Sum amounts from ledger where the associated contract is completed
@@ -23,7 +24,7 @@ class DashboardController extends Controller
             ->join('contracts', 'ledger.contract_id', '=', 'contracts.id')
             ->where('ledger.hitman_id', $user->id)
             ->where('contracts.status', 'completed')
-            ->sum('ledger.amount'); // Calculates sum of all matching transaction amounts
+            ->sum('ledger.amount'); 
             
         $announcements = Announcement::latest()->take(5)->get();
 

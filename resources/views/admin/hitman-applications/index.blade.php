@@ -1,74 +1,96 @@
 <x-app-layout>
     <x-slot name="header">
-        <h2 class="font-semibold text-xl text-gray-800 dark:text-gray-200 leading-tight">
-            {{ __('Pending Hitman Requests') }}
+        <h2 class="font-black text-xl text-zinc-100 uppercase tracking-widest leading-tight">
+            {{ __('Pending Operative Requests') }}
         </h2>
     </x-slot>
 
-    <div class="py-12">
-        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+    <!-- Main Full-Page Wrapper (Set to relative so the logo stretches across the entire screen context) -->
+    <div class="py-12 relative min-h-screen bg-zinc-950 overflow-x-hidden">
+        
+        
+        <div class="absolute inset-0 flex items-center justify-center opacity-[0.15] select-none pointer-events-none z-0 fixed">
+            <img src="{{ asset('images/logo.png') }}" alt="" class="w-[800px] h-[800px] object-contain sticky top-1/4" />
+        </div>
+
+        <!-- Foreground Content Wrapper (Set to z-10 so it stays crisply readable above the background) -->
+        <div class="mx-auto max-w-7xl sm:px-6 lg:px-8 relative z-10">
+            
+            <!-- Session Status Alerts -->
             @if (session('status'))
-                <div class="mb-4 rounded-lg bg-green-50 px-4 py-3 text-sm text-green-700 dark:bg-green-900/30 dark:text-green-300">{{ session('status') }}</div>
+                <div class="mb-6 rounded-xl border border-emerald-500/20 bg-emerald-950/40 px-4 py-3 text-sm text-emerald-400 font-mono backdrop-blur-sm">
+                    {{ session('status') }}
+                </div>
             @endif
 
             @if (session('error'))
-                <div class="mb-4 rounded-lg bg-red-50 px-4 py-3 text-sm text-red-700 dark:bg-red-900/30 dark:text-red-300">{{ session('error') }}</div>
+                <div class="mb-6 rounded-xl border border-red-500/20 bg-red-950/40 px-4 py-3 text-sm text-red-400 font-mono backdrop-blur-sm">
+                    {{ session('error') }}
+                </div>
             @endif
 
-            <div class="overflow-hidden rounded-2xl bg-white shadow-sm ring-1 ring-black/5 dark:bg-gray-800 dark:ring-white/10">
-                <div class="border-b border-gray-100 px-6 py-4 dark:border-gray-700">
-                    <h3 class="text-lg font-semibold text-gray-900 dark:text-gray-100">Application queue</h3>
+            <!-- Main Queue Card -->
+            <div class="overflow-hidden rounded-2xl bg-zinc-900/80 border border-zinc-800/80 shadow-2xl backdrop-blur-md">
+                <div class="border-b border-zinc-800/80 px-6 py-4 bg-zinc-900/40">
+                    <h3 class="text-xs uppercase tracking-widest font-black text-amber-500">Application Queue</h3>
                 </div>
 
                 <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
-                        <thead class="bg-gray-50 dark:bg-gray-900/50">
+                    <table class="min-w-full divide-y divide-zinc-800">
+                        <thead class="bg-zinc-950/60 text-left">
                             <tr>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Codename</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Referral</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Answers</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Motivation</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Status</th>
-                                <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">Actions</th>
+                                <th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-zinc-400">Codename</th>
+                                <th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-zinc-400">Referral</th>
+                                <th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-zinc-400">Status</th>
+                                <th class="px-6 py-4 text-xs font-bold uppercase tracking-widest text-zinc-400 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody class="divide-y divide-gray-100 bg-white dark:divide-gray-700 dark:bg-gray-800">
+                        <tbody class="divide-y divide-zinc-800/60 bg-transparent">
                             @forelse ($applications as $application)
-                                <tr>
-                                    <td class="px-4 py-4 text-sm text-gray-900 dark:text-gray-100">
-                                        <div class="font-medium">{{ $application->codename }}</div>
-                                        <div class="text-xs text-gray-500 dark:text-gray-400">{{ $application->specialty }}</div>
+                                <tr class="hover:bg-zinc-800/20 transition-colors duration-150">
+                                    <td class="px-6 py-4 text-sm">
+                                        <div class="font-bold text-zinc-100 tracking-wide font-mono">{{ $application->codename }}</div>
+                                        <div class="text-xs text-amber-500/80 font-medium mt-0.5">{{ $application->specialty }}</div>
                                     </td>
-                                    <td class="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">{{ $application->referral_codename }}</td>
-                                    <td class="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">
-                                        <div>{{ $application->currency_answer }}</div>
-                                        <div>{{ $application->hotel_rule_answer }}</div>
-                                        <div>{{ $application->best_weapon_answer }}</div>
+                                    <td class="px-6 py-4 text-sm text-zinc-300 font-mono">
+                                        {{ $application->referral_codename ?? 'NONE' }}
                                     </td>
-                                    <td class="px-4 py-4 text-sm text-gray-600 dark:text-gray-300">{{ \Illuminate\Support\Str::limit($application->motivation, 120) }}</td>
-                                    <td class="px-4 py-4 text-sm font-medium capitalize text-gray-900 dark:text-gray-100">{{ $application->status }}</td>
-                                    <td class="px-4 py-4 text-sm">
+                                    <td class="px-6 py-4 text-sm">
+                                        <span class="px-2.5 py-1 text-xs font-bold uppercase tracking-wider rounded font-mono 
+                                            {{ $application->status === 'pending' ? 'bg-amber-950/40 text-amber-400 border border-amber-900/50' : 'bg-zinc-800 text-zinc-400' }}">
+                                            {{ $application->status }}
+                                        </span>
+                                    </td>
+                                    <td class="px-6 py-4 text-sm text-right">
                                         @if ($application->status === 'pending')
-                                            <div class="flex flex-wrap gap-2">
+                                            <div class="flex items-center justify-end gap-2">
                                                 <form method="POST" action="{{ route('admin.applications.approve', $application) }}">
                                                     @csrf
-                                                    <button class="rounded-md bg-green-600 px-3 py-2 text-white hover:bg-green-700">Approve</button>
+                                                    <button class="rounded border border-emerald-600 bg-emerald-600/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-emerald-400 hover:bg-emerald-600 hover:text-white transition-all duration-200">
+                                                        Approve
+                                                    </button>
                                                 </form>
                                                 <form method="POST" action="{{ route('admin.applications.reject', $application) }}">
                                                     @csrf
-                                                    <button class="rounded-md bg-red-600 px-3 py-2 text-white hover:bg-red-700">Reject</button>
+                                                    <button class="rounded border border-red-600 bg-red-600/10 px-3 py-1.5 text-xs font-bold uppercase tracking-wider text-red-400 hover:bg-red-600 hover:text-white transition-all duration-200">
+                                                        Reject
+                                                    </button>
                                                 </form>
                                             </div>
                                         @else
-                                            <div class="text-xs text-gray-500 dark:text-gray-400">
-                                                Reviewed by {{ $application->reviewer?->codename ?? 'system' }}
-                                            </div>
+                                            <span class="text-xs font-mono text-zinc-500 uppercase">
+                                                Verified by {{ $application->reviewer?->codename ?? 'SYSTEM' }}
+                                            </span>
                                         @endif
                                     </td>
                                 </tr>
                             @empty
                                 <tr>
-                                    <td colspan="6" class="px-4 py-10 text-center text-sm text-gray-500 dark:text-gray-400">No applications waiting for review.</td>
+                                    <td colspan="4" class="px-6 py-16 text-center">
+                                        <div class="text-zinc-600 font-mono text-xs uppercase tracking-[0.25em] font-bold">
+                                            [ Warning: No classified profiles awaiting processing ]
+                                        </div>
+                                    </td>
                                 </tr>
                             @endforelse
                         </tbody>

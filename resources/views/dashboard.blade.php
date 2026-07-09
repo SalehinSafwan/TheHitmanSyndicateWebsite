@@ -103,13 +103,26 @@
                                     <svg class="w-4 h-4 text-zinc-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>
                                     <h4 class="text-xs uppercase tracking-widest font-bold">Clearance Status</h4>
                                 </div>
-                                <p class="mt-3 text-sm text-zinc-400 leading-relaxed">
-                                    Active network access requires full administrator vetting. Newly initiated applications are undergoing systematic background verification.
-                                </p>
+                                
+                                @if(auth()->user()->hitmanApplication?->status === 'approved')
+                                    <p class="mt-3 text-sm text-zinc-400 leading-relaxed">
+                                        Identity verification complete. Credentials authorized. Full network access and active operations terminal decrypted successfully.
+                                    </p>
+                                @else
+                                    <p class="mt-3 text-sm text-zinc-400 leading-relaxed">
+                                        Active network access requires full administrator vetting. Newly initiated applications are undergoing systematic background verification.
+                                    </p>
+                                @endif
                             </div>
+
                             <div class="mt-4 pt-3 border-t border-zinc-900 flex items-center gap-2">
-                                <span class="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
-                                <span class="text-[11px] uppercase tracking-wider text-amber-500/90 font-bold">Awaiting Admin Signature</span>
+                                @if(auth()->user()->hitmanApplication?->status === 'approved')
+                                    <span class="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                                    <span class="text-[11px] uppercase tracking-wider text-emerald-500 font-bold">Operative Verified & Vetted</span>
+                                @else
+                                    <span class="inline-block w-2 h-2 rounded-full bg-amber-500 animate-pulse"></span>
+                                    <span class="text-[11px] uppercase tracking-wider text-amber-500/90 font-bold">Awaiting Admin Signature</span>
+                                @endif
                             </div>
                         </div>
                     @endif

@@ -5,8 +5,11 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Role;
 use App\Models\User;
+use App\Models\HitmanApplication;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
@@ -28,27 +31,44 @@ class UserAdministrationController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $validated = $request->validate([
-            'codename' => ['required', 'string', 'max:255', 'unique:users,codename'],
+            'codename'  => ['required', 'string', 'max:255', 'unique:users,codename', 'unique:hitman_applications,codename'],
             'specialty' => ['required', 'string', 'max:255'],
-            'role' => ['required', 'string', 'in:Admin,Staff,Hitman'],
-            'name' => ['nullable', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email'],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
+            'role'      => ['required', 'string', 'in:Admin,Staff,Hitman'],
+            'email'     => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email', 'unique:hitman_applications,email'],
+            'password'  => ['required', 'confirmed', Rules\Password::defaults()],
         ]);
 
-        $user = User::create([
-            'codename' => $validated['codename'],
-            'specialty' => $validated['specialty'],
-            'role' => $validated['role'],
-            'name' => $validated['name'] ?: $validated['codename'],
-            'email' => $validated['email'],
-            'password' => Hash::make($validated['password']),
-        ]);
+        // Wrap operations in a transaction to protect data integrity
+        DB::transaction(function () use ($validated) {
+            
+            // 1. Initialize the primary User profile
+            $user = User::create([
+                'codename'  => $validated['codename'],
+                'specialty' => $validated['specialty'],
+                'role'      => $validated['role'],
+                'email'     => $validated['email'],
+                'password'  => Hash::make($validated['password']),
+            ]);
 
-        $role = Role::firstOrCreate(['name' => $validated['role']]);
-        $user->roles()->syncWithoutDetaching($role->id);
+            // 2. Attach security system role metrics
+            $role = Role::firstOrCreate(['name' => $validated['role']]);
+            $user->roles()->syncWithoutDetaching($role->id);
 
-        return redirect()->route('admin.users.index')->with('status', 'A new syndicate account was created.');
+            // 3. Mirror the application dossier tracking row as pre-vetted
+            HitmanApplication::create([
+                'user_id'           => $user->id,
+                'codename'          => $validated['codename'],
+                'specialty'         => $validated['specialty'],
+                'email'             => $validated['email'],
+                'password'          => $user->password, // Keeps hash history identical
+                'status'            => 'approved',      // Pre-approved context flag
+                'reviewed_by'       => Auth::id(),      // Stamps the active admin ID
+                'reviewed_at'       => now(),
+                'referral_codename' => Auth::user()->codename ?? 'HQ Direct Entry',
+            ]);
+        });
+
+        return redirect()->route('admin.users.index')->with('status', 'Syndicate files synced. Account initialized and dossier approved.');
     }
 
     public function destroy(User $user): RedirectResponse
@@ -59,15 +79,19 @@ class UserAdministrationController extends Controller
             auth()->logout();
         }
 
-        $user->delete();
+        // Clean up both user and related application data cascadingly
+        DB::transaction(function () use ($user) {
+            $user->hitmanApplication()->delete();
+            $user->delete();
+        });
 
         if ($isCurrentUser) {
             request()->session()->invalidate();
             request()->session()->regenerateToken();
 
-            return redirect('/')->with('status', 'Your account was removed.');
+            return redirect('/')->with('status', 'Your profile and system signatures have been erased.');
         }
 
-        return back()->with('status', 'The account was removed.');
+        return back()->with('status', 'Dossier profile deleted successfully.');
     }
 }

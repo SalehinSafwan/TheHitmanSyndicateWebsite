@@ -40,7 +40,6 @@ class HitmanApplicationController extends Controller
                 'codename' => $application->codename,
                 'specialty' => $application->specialty,
                 'role' => 'Hitman',
-                'name' => $application->codename,
                 'email' => $application->email,
                 'password' => $application->password,
             ]);
@@ -48,6 +47,7 @@ class HitmanApplicationController extends Controller
             $hitmanRole = Role::firstOrCreate(['name' => 'Hitman']);
             $user->roles()->syncWithoutDetaching($hitmanRole->id);
 
+        
             $application->update([
                 'status' => 'approved',
                 'reviewed_by' => auth()->id(),
@@ -56,9 +56,9 @@ class HitmanApplicationController extends Controller
             ]);
 
             return $user;
-        });
+        }); 
 
-        return back()->with('status', $user->codename.' has been approved and activated.');
+        return back()->with('status', 'OPERATIVE ' . strtoupper($user->codename) . ' HAS BEEN APPROVED AND ACTIVATED.');
     }
 
     public function reject(HitmanApplication $application): RedirectResponse
@@ -73,6 +73,7 @@ class HitmanApplicationController extends Controller
             'reviewed_at' => now(),
         ]);
 
-        return back()->with('status', $application->codename.' has been rejected.');
+        //feedback message 
+        return back()->with('error', 'APPLICATION DENIED. OPERATIVE ' . strtoupper($application->codename) . ' BLACKLISTED.');
     }
 }

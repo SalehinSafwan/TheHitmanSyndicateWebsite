@@ -11,6 +11,7 @@ use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\Rules;
 use Illuminate\View\View;
+use App\Models\HitmanApplication;
 
 class RegisteredUserController extends Controller
 {
@@ -27,28 +28,24 @@ class RegisteredUserController extends Controller
      *
      * @throws \Illuminate\Validation\ValidationException
      */
-    public function store(Request $request): RedirectResponse
+    public function store(Request $request)
     {
-        $request->validate([
-            'codename' => ['required', 'string', 'max:255', 'unique:'.User::class],
-            'specialty' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:'.User::class],
-            'password' => ['required', 'confirmed', Rules\Password::defaults()],
-            // 'referral_codename' is skipped from validation for now as requested
-        ]);
+    $request->validate([
+        'codename' => ['required', 'string', 'max:255', 'unique:users', 'unique:hitman_applications'],
+        'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users', 'unique:hitman_applications'],
+        'password' => ['required', 'confirmed', \Illuminate\Validation\Rules\Password::defaults()],
+    ]);
 
-        $user = User::create([
-            'codename' => $request->codename,
-            'specialty' => $request->specialty,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'referral_codename' => $request->referral_codename, // Saved without validation
-        ]);
+    HitmanApplication::create([
+        'codename' => $request->codename,
+        'email' => $request->email,
+        'password' => Hash::make($request->password), // Stored until approved
+        'specialty' => $request->specialty,
+        'status' => 'pending',
+        'referral_codename' => $request->input('referral_codename', null),
+    ]);
 
-        event(new Registered($user));
-
-        Auth::login($user);
-
-        return redirect(route('dashboard', absolute: false));
+    return redirect()->route('login')
+        ->with('status', 'CLASSIFIED TRANSMISSION RECEIVED. STAND BY FOR CLEARANCE.');
     }
 }
