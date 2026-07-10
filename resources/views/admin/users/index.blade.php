@@ -13,9 +13,9 @@
 
     <div class="py-12 relative min-h-[calc(100vh-65px)] overflow-hidden">
         
-        <!-- Background Decorative Element -->
-        <div class="absolute inset-0 flex items-center justify-center opacity-[0.05] select-none pointer-events-none z-0">
-            <div class="text-[25vw] font-black tracking-tighter text-zinc-600 uppercase">SYS</div>
+        <!-- Large Logo Watermark Background -->
+        <div class="absolute inset-0 flex items-center justify-center opacity-[0.12] select-none pointer-events-none z-0">
+            <img src="{{ asset('images/logo.png') }}" alt="" class="w-[600px] h-[600px] object-contain scale-110 blur-[2px]" />
         </div>
 
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 relative z-10">
