@@ -7,7 +7,10 @@
             </h2>
             <div class="flex items-center gap-2">
                 <span class="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                <span class="text-[10px] uppercase tracking-widest text-zinc-500 font-bold">Secure Connection</span>
+                <span class="text-[10px] uppercase tracking-widest text-zinc-500 font-bold flex items-center">
+                    <span>Secure Connection</span>
+                    <span id="location-display" class="text-amber-500/90 font-mono ml-2 pl-2 border-l border-zinc-800 hidden"></span>
+                </span>
             </div>
         </div>
     </x-slot>
@@ -192,4 +195,115 @@
 
         </div>
     </div>
+
+    <!-- Geolocation & Weather Dashboard Widget -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const apiKey = '977ef689adea5b02262e7f02dbc51b1c';
+            const locationDisplay = document.getElementById('location-display');
+
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(function (position) {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    const url = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+
+                    fetch(url)
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error('Weather API request failed');
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            if (data && data.name) {
+                                const city = data.name;
+                                const country = data.sys && data.sys.country ? data.sys.country : '';
+                                const temp = data.main && data.main.temp ? Math.round(data.main.temp) : null;
+                                
+                                let displayText = `// ${city}`;
+                                if (country) {
+                                    displayText += `, ${country}`;
+                                }
+                                if (temp !== null) {
+                                    displayText += ` [${temp}°C]`;
+                                }
+                                
+                                locationDisplay.textContent = displayText.toUpperCase();
+                                locationDisplay.classList.remove('hidden');
+                            }
+                        })
+                        .catch(error => {
+                            console.error('Weather fetching failed:', error);
+                            fetchIpFallback();
+                        });
+                }, function (error) {
+                    console.warn('Geolocation access denied/failed, falling back to IP.', error);
+                    fetchIpFallback();
+                });
+            } else {
+                console.warn('Geolocation unsupported, falling back to IP.');
+                fetchIpFallback();
+            }
+
+            function fetchIpFallback() {
+                fetch('https://ipapi.co/json/')
+                    .then(response => {
+                        if (!response.ok) {
+                            throw new Error('IP API request failed');
+                        }
+                        return response.json();
+                    })
+                    .then(ipData => {
+                        if (ipData && ipData.city) {
+                            const city = ipData.city;
+                            const country = ipData.country_code || '';
+                            
+                            if (ipData.latitude && ipData.longitude) {
+                                const lat = ipData.latitude;
+                                const lon = ipData.longitude;
+                                const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${apiKey}&units=metric`;
+                                
+                                fetch(weatherUrl)
+                                    .then(res => res.json())
+                                    .then(wData => {
+                                        const temp = wData.main && wData.main.temp ? Math.round(wData.main.temp) : null;
+                                        let displayText = `// ${city}`;
+                                        if (country) {
+                                            displayText += `, ${country}`;
+                                        }
+                                        if (temp !== null) {
+                                            displayText += ` [${temp}°C]`;
+                                        }
+                                        displayText += ` (PROXY)`;
+                                        
+                                        locationDisplay.textContent = displayText.toUpperCase();
+                                        locationDisplay.classList.remove('hidden');
+                                    })
+                                    .catch(() => {
+                                        let displayText = `// ${city}`;
+                                        if (country) {
+                                            displayText += `, ${country}`;
+                                        }
+                                        displayText += ` (PROXY)`;
+                                        locationDisplay.textContent = displayText.toUpperCase();
+                                        locationDisplay.classList.remove('hidden');
+                                    });
+                            } else {
+                                let displayText = `// ${city}`;
+                                if (country) {
+                                    displayText += `, ${country}`;
+                                }
+                                displayText += ` (PROXY)`;
+                                locationDisplay.textContent = displayText.toUpperCase();
+                                locationDisplay.classList.remove('hidden');
+                            }
+                        }
+                    })
+                    .catch(err => {
+                        console.error('IP fallback failed:', err);
+                    });
+            }
+        });
+    </script>
 </x-app-layout>

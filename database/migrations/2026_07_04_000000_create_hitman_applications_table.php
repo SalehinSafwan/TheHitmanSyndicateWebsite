@@ -17,11 +17,11 @@ return new class extends Migration
             $table->string('specialty');
             $table->string('email')->unique();
             $table->string('password');
-            $table->string('referral_codename');
-            $table->string('currency_answer');
-            $table->string('hotel_rule_answer');
-            $table->string('best_weapon_answer');
-            $table->text('motivation');
+            $table->string('referral_codename')->nullable();
+            $table->string('currency_answer')->nullable();
+            $table->string('hotel_rule_answer')->nullable();
+            $table->string('best_weapon_answer')->nullable();
+            $table->text('motivation')->nullable();
             $table->string('status')->default('pending');
             $table->foreignId('reviewed_by')->nullable()->constrained('users')->nullOnDelete();
             $table->foreignId('user_id')->nullable()->constrained('users')->nullOnDelete();

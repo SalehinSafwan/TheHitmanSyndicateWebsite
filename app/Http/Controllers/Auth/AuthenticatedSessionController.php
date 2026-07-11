@@ -45,7 +45,11 @@ class AuthenticatedSessionController extends Controller
     }
 
     // 2. If not pending or rejected, continue to normal authentication logic
+    // This logs the user in using Laravel's session guard (`web`).
     $request->authenticate();
+    
+    // Regenerating the session ID prevents Session Fixation attacks by making sure
+    // a new unique identifier is issued to the browser upon successful login.
     $request->session()->regenerate();
 
     return redirect()->intended(route('dashboard', absolute: false));
@@ -56,10 +60,14 @@ class AuthenticatedSessionController extends Controller
      */
     public function destroy(Request $request): RedirectResponse
     {
+        // Log out the user from the 'web' session guard.
         Auth::guard('web')->logout();
 
+        // Invalidate the current session and clear all attributes/payloads stored in the database.
         $request->session()->invalidate();
 
+        // Regenerate the CSRF token to prevent one-click Cross-Site Request Forgery attacks
+        // using the previously associated token signature.
         $request->session()->regenerateToken();
 
         return redirect('/');

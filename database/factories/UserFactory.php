@@ -28,7 +28,6 @@ class UserFactory extends Factory
             'codename' => Str::upper(fake()->unique()->bothify('HX-###')),
             'specialty' => fake()->randomElement(['Infiltration', 'Extraction', 'Recon', 'Cleanup', 'Surveillance']),
             'role' => 'Hitman',
-            'name' => fake()->name(),
             'email' => fake()->unique()->safeEmail(),
             'email_verified_at' => now(),
             'password' => static::$password ??= Hash::make('password'),

@@ -18,6 +18,8 @@ return [
     |
     */
 
+    // This driver persists session payloads to the database 'sessions' table.
+    // Ensure database migration has been run to create the schema.
     'driver' => env('SESSION_DRIVER', 'database'),
 
     /*
@@ -127,6 +129,9 @@ return [
     |
     */
 
+    // This session cookie contains the encrypted session ID.
+    // When the browser passes this cookie in subsequent requests, Laravel decrypts it
+    // and looks up the corresponding session record (e.g. in the database).
     'cookie' => env(
         'SESSION_COOKIE',
         Str::slug((string) env('APP_NAME', 'laravel')).'-session'

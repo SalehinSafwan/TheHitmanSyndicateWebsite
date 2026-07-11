@@ -71,6 +71,7 @@ class ProfileController extends Controller
 
         $user = $request->user();
 
+        // Terminate the authenticated state of the user.
         Auth::logout();
 
         // Perform cascading network records deletion 
@@ -79,7 +80,10 @@ class ProfileController extends Controller
             $user->delete();
         });
 
+        // Completely destroy the current session to ensure the deleted user's session is no longer active.
         $request->session()->invalidate();
+
+        // Force regeneration of the CSRF token to prevent token reuse after session destruction.
         $request->session()->regenerateToken();
 
         return Redirect::to('/');

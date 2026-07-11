@@ -76,6 +76,7 @@ class UserAdministrationController extends Controller
         $isCurrentUser = auth()->id() === $user->id;
 
         if ($isCurrentUser) {
+            // Log out the currently authenticated admin if they are deleting themselves.
             auth()->logout();
         }
 
@@ -86,7 +87,10 @@ class UserAdministrationController extends Controller
         });
 
         if ($isCurrentUser) {
+            // Invalidate the session database payload to prevent future session hijacking attempts.
             request()->session()->invalidate();
+            
+            // Regenerate the CSRF token to complete session cleanup.
             request()->session()->regenerateToken();
 
             return redirect('/')->with('status', 'Your profile and system signatures have been erased.');
