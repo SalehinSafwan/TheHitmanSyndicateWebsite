@@ -17,7 +17,12 @@ class DashboardController extends Controller
         
         $user->load('hitmanApplication');
 
-        $contracts = Contract::where('user_id', $user->id)->get();
+        // Query contracts: either assigned to this hitman, OR pending and unassigned
+        $contracts = Contract::where('user_id', $user->id)
+            ->orWhere(function ($query) {
+                $query->whereNull('user_id')
+                    ->where('status', 'pending');
+            })->get();
         
         // Sum amounts from ledger where the associated contract is completed
         $totalEarnings = DB::table('ledger')

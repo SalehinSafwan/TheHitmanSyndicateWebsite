@@ -30,6 +30,10 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+    
+    // Operative contract acceptance and completion
+    Route::post('/contracts/{contract}/accept', [ContractController::class, 'accept'])->name('contracts.accept');
+    Route::post('/contracts/{contract}/complete', [ContractController::class, 'complete'])->name('contracts.complete');
 });
 
 Route::prefix('admin')
@@ -44,11 +48,15 @@ Route::prefix('admin')
         Route::get('/users/create', [UserAdministrationController::class, 'create'])->name('users.create');
         Route::post('/users', [UserAdministrationController::class, 'store'])->name('users.store');
         Route::delete('/users/{user}', [UserAdministrationController::class, 'destroy'])->name('users.destroy');
+
+        // Admin contract management
+        Route::get('/contracts/create', [ContractController::class, 'create'])->name('contracts.create');
+        Route::post('/contracts', [ContractController::class, 'store'])->name('contracts.store');
     });
 
 Route::resource('users', UserController::class);
 Route::resource('roles', RoleController::class);
-Route::resource('contracts', ContractController::class);
+Route::resource('contracts', ContractController::class)->except(['create', 'store']);
 Route::resource('contract-assignments', ContractAssignmentController::class);
 Route::resource('ledger', LedgerController::class);
 Route::resource('resources', ResourceController::class);

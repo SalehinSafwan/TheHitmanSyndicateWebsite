@@ -23,6 +23,16 @@
         </div>
 
         <div class="max-w-7xl mx-auto sm:px-6 lg:px-8 relative z-10 space-y-6">
+            @if (session('status'))
+                <div class="rounded-xl bg-emerald-950/40 border border-emerald-800/40 px-4 py-3 text-sm text-emerald-400 font-bold uppercase tracking-wide shadow-lg">
+                    {{ session('status') }}
+                </div>
+            @endif
+            @if (session('error'))
+                <div class="rounded-xl bg-red-950/40 border border-red-800/40 px-4 py-3 text-sm text-red-400 font-bold uppercase tracking-wide shadow-lg">
+                    {{ session('error') }}
+                </div>
+            @endif
             
             <!-- Main Operative Dossier Card -->
             <div class="overflow-hidden rounded-2xl bg-zinc-900/80 backdrop-blur-md border border-zinc-800/50 shadow-2xl">
@@ -148,16 +158,21 @@
                             @forelse($contracts as $contract)
                                 <div class="group/item flex items-center justify-between p-3.5 rounded-xl bg-zinc-950 border border-zinc-850 hover:border-zinc-800 transition duration-150">
                                     <div>
-                                        <p class="font-bold text-sm text-zinc-200 group-hover/item:text-white transition duration-100">{{ $contract->title }}</p>
-                                        <div class="flex items-center gap-2 mt-1">
-                                            <span class="text-[10px] uppercase font-bold tracking-wider {{ $contract->status === 'active' || $contract->status === 'completed' ? 'text-emerald-500' : 'text-amber-500' }}">
-                                                {{ $contract->status }}
-                                            </span>
-                                        </div>
+                                        <p class="font-bold text-sm text-zinc-200 group-hover/item:text-white transition duration-100 font-mono tracking-wide">
+                                            {{ $contract->title }}
+                                        </p>
                                     </div>
-                                    <a href="{{ route('contracts.show', $contract->id) }}" class="px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-amber-500 bg-amber-950/20 border border-amber-900/30 rounded-md hover:bg-amber-500 hover:text-zinc-950 transition duration-150">
+                                    <button 
+                                        type="button" 
+                                        class="decrypt-dossier-btn px-3 py-1.5 text-[10px] font-bold uppercase tracking-widest text-amber-500 bg-amber-950/20 border border-amber-900/30 rounded-md hover:bg-amber-500 hover:text-zinc-950 transition duration-150"
+                                        data-id="{{ $contract->id }}"
+                                        data-title="{{ $contract->title }}"
+                                        data-target="{{ $contract->target }}"
+                                        data-bounty="{{ number_format($contract->bounty) }}"
+                                        data-status="{{ $contract->status }}"
+                                    >
                                         Decrypt Dossier
-                                    </a>
+                                    </button>
                                 </div>
                             @empty
                                 <div class="text-center py-8 border border-dashed border-zinc-800 rounded-xl text-zinc-500">
@@ -196,9 +211,71 @@
         </div>
     </div>
 
-    <!-- Geolocation & Weather Dashboard Widget -->
+    <!-- Contract Dossier Modal Popup -->
+    <div id="dossier-modal" class="fixed inset-0 z-50 flex items-center justify-center hidden">
+        <!-- Backdrop -->
+        <div id="dossier-modal-backdrop" class="absolute inset-0 bg-zinc-950/80 backdrop-blur-sm transition-opacity duration-300"></div>
+
+        <!-- Modal Content Container -->
+        <div class="relative w-full max-w-md mx-4 overflow-hidden rounded-2xl bg-zinc-900 border border-zinc-800 shadow-2xl p-6 sm:p-8 transform scale-95 opacity-0 transition-all duration-300 z-10">
+            <!-- Glow effect border at top -->
+            <div class="absolute top-0 left-0 right-0 h-[2px] bg-gradient-to-r from-transparent via-amber-500 to-transparent"></div>
+            
+            <div class="flex items-center gap-3 border-b border-zinc-800/80 pb-4 mb-5">
+                <svg class="w-5 h-5 text-amber-500 animate-pulse" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/></svg>
+                <h3 class="text-xs uppercase tracking-[0.3em] font-black text-amber-500">Classified Dossier Decrypted</h3>
+            </div>
+
+            <!-- Details Block -->
+            <div class="space-y-4 font-mono text-zinc-300">
+                <div>
+                    <span class="block text-[10px] uppercase font-bold text-zinc-500 tracking-wider mb-1">Operation:</span>
+                    <span id="modal-title" class="text-sm font-black text-white uppercase tracking-wide"></span>
+                </div>
+                <div>
+                    <span class="block text-[10px] uppercase font-bold text-zinc-500 tracking-wider mb-1">Code Target:</span>
+                    <span id="modal-target" class="text-sm font-black text-red-500 uppercase tracking-wide"></span>
+                </div>
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <span class="block text-[10px] uppercase font-bold text-zinc-500 tracking-wider mb-1">Bounty Amount:</span>
+                        <span id="modal-bounty" class="text-sm font-black text-amber-400"></span> <span class="text-[9px] uppercase font-sans font-bold text-zinc-400">GC</span>
+                    </div>
+                    <div>
+                        <span class="block text-[10px] uppercase font-bold text-zinc-500 tracking-wider mb-1">Status Sign:</span>
+                        <span id="modal-status" class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded border"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Divider -->
+            <div class="h-[1px] bg-gradient-to-r from-transparent via-zinc-800 to-transparent my-6"></div>
+
+            <!-- Actions row -->
+            <div class="flex items-center justify-end gap-3">
+                <button id="modal-skip-btn" type="button" class="px-4 py-2.5 rounded-lg bg-zinc-950 border border-zinc-850 hover:bg-zinc-900 text-zinc-400 hover:text-white text-xs font-bold uppercase tracking-widest transition duration-150">
+                    Skip / Close
+                </button>
+                <form id="modal-accept-form" method="POST" action="">
+                    @csrf
+                    <button type="submit" class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-zinc-950 text-xs font-extrabold uppercase tracking-widest shadow-lg shadow-amber-900/20 active:scale-95 transition duration-150">
+                        Accept Contract
+                    </button>
+                </form>
+                <form id="modal-complete-form" method="POST" action="">
+                    @csrf
+                    <button type="submit" class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-zinc-950 text-xs font-extrabold uppercase tracking-widest shadow-lg shadow-emerald-900/20 active:scale-95 transition duration-150">
+                        Mark Completed
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Geolocation & Weather Dashboard Widget + Modal Handlers -->
     <script>
         document.addEventListener('DOMContentLoaded', function () {
+            // Geolocation and Weather
             const apiKey = '977ef689adea5b02262e7f02dbc51b1c';
             const locationDisplay = document.getElementById('location-display');
 
@@ -304,6 +381,75 @@
                         console.error('IP fallback failed:', err);
                     });
             }
+
+            // Classified Dossier Modal Popup
+            const modal = document.getElementById('dossier-modal');
+            const modalContent = modal.querySelector('.transform');
+            const backdrop = document.getElementById('dossier-modal-backdrop');
+            
+            const modalTitle = document.getElementById('modal-title');
+            const modalTarget = document.getElementById('modal-target');
+            const modalBounty = document.getElementById('modal-bounty');
+            const modalStatus = document.getElementById('modal-status');
+            const acceptForm = document.getElementById('modal-accept-form');
+            const completeForm = document.getElementById('modal-complete-form');
+            const skipBtn = document.getElementById('modal-skip-btn');
+
+            document.querySelectorAll('.decrypt-dossier-btn').forEach(btn => {
+                btn.addEventListener('click', function () {
+                    const id = this.getAttribute('data-id');
+                    const title = this.getAttribute('data-title');
+                    const target = this.getAttribute('data-target');
+                    const bounty = this.getAttribute('data-bounty');
+                    const status = this.getAttribute('data-status');
+
+                    // Populate values
+                    modalTitle.textContent = title;
+                    modalTarget.textContent = target;
+                    modalBounty.textContent = bounty;
+                    modalStatus.textContent = status;
+
+                    // Apply status badge classes dynamically
+                    modalStatus.className = 'px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded border ';
+                    if (status === 'pending') {
+                        modalStatus.classList.add('bg-amber-950/40', 'border-amber-800/40', 'text-amber-400');
+                        acceptForm.classList.remove('hidden');
+                        acceptForm.setAttribute('action', `/contracts/${id}/accept`);
+                        completeForm.classList.add('hidden');
+                    } else if (status === 'accepted') {
+                        modalStatus.classList.add('bg-blue-950/40', 'border-blue-800/40', 'text-blue-400');
+                        acceptForm.classList.add('hidden');
+                        completeForm.classList.remove('hidden');
+                        completeForm.setAttribute('action', `/contracts/${id}/complete`);
+                    } else if (status === 'completed') {
+                        modalStatus.classList.add('bg-emerald-950/40', 'border-emerald-800/40', 'text-emerald-400');
+                        acceptForm.classList.add('hidden');
+                        completeForm.classList.add('hidden');
+                    } else {
+                        modalStatus.classList.add('bg-zinc-800', 'border-zinc-700', 'text-zinc-300');
+                        acceptForm.classList.add('hidden');
+                        completeForm.classList.add('hidden');
+                    }
+
+                    // Display modal with transition
+                    modal.classList.remove('hidden');
+                    // Trigger style recalculation for animations
+                    modal.offsetHeight;
+                    modalContent.classList.remove('scale-95', 'opacity-0');
+                    modalContent.classList.add('scale-100', 'opacity-100');
+                });
+            });
+
+            function closeModal() {
+                modalContent.classList.remove('scale-100', 'opacity-100');
+                modalContent.classList.add('scale-95', 'opacity-0');
+                setTimeout(() => {
+                    modal.classList.add('hidden');
+                }, 300);
+            }
+
+            backdrop.addEventListener('click', closeModal);
+            skipBtn.addEventListener('click', closeModal);
         });
     </script>
 </x-app-layout>

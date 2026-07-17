@@ -5,9 +5,14 @@
             <h2 class="font-black text-xl text-white uppercase tracking-wider">
                 {{ __('User Management Registry') }}
             </h2>
-            <a href="{{ route('admin.users.create') }}" class="rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 px-4 py-2.5 text-xs font-extrabold text-zinc-950 uppercase tracking-widest shadow-md transition duration-150">
-                Create Account
-            </a>
+            <div class="flex gap-3">
+                <a href="{{ route('admin.contracts.create') }}" class="rounded-lg bg-zinc-900 border border-zinc-800 hover:text-white hover:bg-zinc-850 px-4 py-2.5 text-xs font-bold text-zinc-300 uppercase tracking-widest transition duration-150">
+                    Initialize Contract
+                </a>
+                <a href="{{ route('admin.users.create') }}" class="rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 px-4 py-2.5 text-xs font-extrabold text-zinc-950 uppercase tracking-widest shadow-md transition duration-150">
+                    Create Account
+                </a>
+            </div>
         </div>
     </x-slot>
 
