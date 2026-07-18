@@ -17,12 +17,17 @@ class DashboardController extends Controller
         
         $user->load('hitmanApplication');
 
-        // Query contracts: either assigned to this hitman, OR pending and unassigned
-        $contracts = Contract::where('user_id', $user->id)
-            ->orWhere(function ($query) {
-                $query->whereNull('user_id')
-                    ->where('status', 'pending');
-            })->get();
+        // Query contracts: Admins see all, Hitmen see unassigned + their own
+        if ($user->role === 'Admin') {
+            $contracts = Contract::with('assignee')->latest()->get();
+        } else {
+            $contracts = Contract::with('assignee')
+                ->where('user_id', $user->id)
+                ->orWhere(function ($query) {
+                    $query->whereNull('user_id')
+                        ->where('status', 'pending');
+                })->latest()->get();
+        }
         
         // Sum amounts from ledger where the associated contract is completed
         $totalEarnings = DB::table('ledger')

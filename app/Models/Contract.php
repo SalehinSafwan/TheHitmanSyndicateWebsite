@@ -12,6 +12,10 @@ class Contract extends Model
         return $this->hasMany(ContractAssignment::class);
     }
 
+    public function assignee() {
+        return $this->belongsTo(User::class, 'user_id');
+    }
+
     public function productionCompanies() {
         return $this->belongsToMany(ProductionCompany::class, 'contract_production');
     }

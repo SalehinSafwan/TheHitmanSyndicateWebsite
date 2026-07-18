@@ -170,6 +170,7 @@
                                         data-target="{{ $contract->target }}"
                                         data-bounty="{{ number_format($contract->bounty) }}"
                                         data-status="{{ $contract->status }}"
+                                        data-assignee="{{ $contract->assignee?->codename ?? 'UNASSIGNED' }}"
                                     >
                                         Decrypt Dossier
                                     </button>
@@ -246,6 +247,10 @@
                         <span id="modal-status" class="px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded border"></span>
                     </div>
                 </div>
+                <div>
+                    <span class="block text-[10px] uppercase font-bold text-zinc-500 tracking-wider mb-1">Assigned Operative:</span>
+                    <span id="modal-assignee" class="text-sm font-black text-amber-500 uppercase tracking-wide"></span>
+                </div>
             </div>
 
             <!-- Divider -->
@@ -256,18 +261,20 @@
                 <button id="modal-skip-btn" type="button" class="px-4 py-2.5 rounded-lg bg-zinc-950 border border-zinc-850 hover:bg-zinc-900 text-zinc-400 hover:text-white text-xs font-bold uppercase tracking-widest transition duration-150">
                     Skip / Close
                 </button>
-                <form id="modal-accept-form" method="POST" action="">
-                    @csrf
-                    <button type="submit" class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-zinc-950 text-xs font-extrabold uppercase tracking-widest shadow-lg shadow-amber-900/20 active:scale-95 transition duration-150">
-                        Accept Contract
-                    </button>
-                </form>
-                <form id="modal-complete-form" method="POST" action="">
-                    @csrf
-                    <button type="submit" class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-zinc-950 text-xs font-extrabold uppercase tracking-widest shadow-lg shadow-emerald-900/20 active:scale-95 transition duration-150">
-                        Mark Completed
-                    </button>
-                </form>
+                @if(auth()->user()->role !== 'Admin')
+                    <form id="modal-accept-form" method="POST" action="">
+                        @csrf
+                        <button type="submit" class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-amber-600 to-amber-700 hover:from-amber-500 hover:to-amber-600 text-zinc-950 text-xs font-extrabold uppercase tracking-widest shadow-lg shadow-amber-900/20 active:scale-95 transition duration-150">
+                            Accept Contract
+                        </button>
+                    </form>
+                    <form id="modal-complete-form" method="POST" action="">
+                        @csrf
+                        <button type="submit" class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-emerald-600 to-emerald-700 hover:from-emerald-500 hover:to-emerald-600 text-zinc-950 text-xs font-extrabold uppercase tracking-widest shadow-lg shadow-emerald-900/20 active:scale-95 transition duration-150">
+                            Mark Completed
+                        </button>
+                    </form>
+                @endif
             </div>
         </div>
     </div>
@@ -391,6 +398,7 @@
             const modalTarget = document.getElementById('modal-target');
             const modalBounty = document.getElementById('modal-bounty');
             const modalStatus = document.getElementById('modal-status');
+            const modalAssignee = document.getElementById('modal-assignee');
             const acceptForm = document.getElementById('modal-accept-form');
             const completeForm = document.getElementById('modal-complete-form');
             const skipBtn = document.getElementById('modal-skip-btn');
@@ -402,33 +410,51 @@
                     const target = this.getAttribute('data-target');
                     const bounty = this.getAttribute('data-bounty');
                     const status = this.getAttribute('data-status');
+                    const assignee = this.getAttribute('data-assignee');
 
                     // Populate values
                     modalTitle.textContent = title;
                     modalTarget.textContent = target;
                     modalBounty.textContent = bounty;
                     modalStatus.textContent = status;
+                    modalAssignee.textContent = assignee;
 
                     // Apply status badge classes dynamically
                     modalStatus.className = 'px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider rounded border ';
                     if (status === 'pending') {
                         modalStatus.classList.add('bg-amber-950/40', 'border-amber-800/40', 'text-amber-400');
-                        acceptForm.classList.remove('hidden');
-                        acceptForm.setAttribute('action', `/contracts/${id}/accept`);
-                        completeForm.classList.add('hidden');
+                        if (acceptForm) {
+                            acceptForm.classList.remove('hidden');
+                            acceptForm.setAttribute('action', `/contracts/${id}/accept`);
+                        }
+                        if (completeForm) {
+                            completeForm.classList.add('hidden');
+                        }
                     } else if (status === 'accepted') {
                         modalStatus.classList.add('bg-blue-950/40', 'border-blue-800/40', 'text-blue-400');
-                        acceptForm.classList.add('hidden');
-                        completeForm.classList.remove('hidden');
-                        completeForm.setAttribute('action', `/contracts/${id}/complete`);
+                        if (acceptForm) {
+                            acceptForm.classList.add('hidden');
+                        }
+                        if (completeForm) {
+                            completeForm.classList.remove('hidden');
+                            completeForm.setAttribute('action', `/contracts/${id}/complete`);
+                        }
                     } else if (status === 'completed') {
                         modalStatus.classList.add('bg-emerald-950/40', 'border-emerald-800/40', 'text-emerald-400');
-                        acceptForm.classList.add('hidden');
-                        completeForm.classList.add('hidden');
+                        if (acceptForm) {
+                            acceptForm.classList.add('hidden');
+                        }
+                        if (completeForm) {
+                            completeForm.classList.add('hidden');
+                        }
                     } else {
                         modalStatus.classList.add('bg-zinc-800', 'border-zinc-700', 'text-zinc-300');
-                        acceptForm.classList.add('hidden');
-                        completeForm.classList.add('hidden');
+                        if (acceptForm) {
+                            acceptForm.classList.add('hidden');
+                        }
+                        if (completeForm) {
+                            completeForm.classList.add('hidden');
+                        }
                     }
 
                     // Display modal with transition

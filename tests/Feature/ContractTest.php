@@ -143,3 +143,89 @@ test('hitman cannot complete non-accepted contract', function () {
     $response->assertSessionHas('error', 'This contract cannot be marked completed in its current state.');
     $this->assertEquals('pending', $contract->refresh()->status);
 });
+
+test('admin dashboard lists all contracts including pending, accepted, and completed ones', function () {
+    $admin = User::factory()->create(['role' => 'Admin']);
+    $hitman1 = User::factory()->create(['role' => 'Hitman']);
+    $hitman2 = User::factory()->create(['role' => 'Hitman']);
+
+    $contractPending = Contract::forceCreate([
+        'title' => 'Pending Job',
+        'target' => 'Target A',
+        'bounty' => 5000,
+        'user_id' => null,
+        'status' => 'pending',
+    ]);
+
+    $contractAccepted = Contract::forceCreate([
+        'title' => 'Accepted Job',
+        'target' => 'Target B',
+        'bounty' => 10000,
+        'user_id' => $hitman1->id,
+        'status' => 'accepted',
+    ]);
+
+    $contractCompleted = Contract::forceCreate([
+        'title' => 'Completed Job',
+        'target' => 'Target C',
+        'bounty' => 15000,
+        'user_id' => $hitman2->id,
+        'status' => 'completed',
+    ]);
+
+    $response = $this->actingAs($admin)->get(route('dashboard'));
+    $response->assertStatus(200);
+
+    $responseContracts = $response->viewData('contracts');
+    $this->assertCount(3, $responseContracts);
+    $this->assertTrue($responseContracts->contains($contractPending));
+    $this->assertTrue($responseContracts->contains($contractAccepted));
+    $this->assertTrue($responseContracts->contains($contractCompleted));
+});
+
+test('hitman dashboard lists only unassigned pending contracts and their own accepted/completed contracts', function () {
+    $hitman1 = User::factory()->create(['role' => 'Hitman']);
+    $hitman2 = User::factory()->create(['role' => 'Hitman']);
+
+    $unassignedPending = Contract::forceCreate([
+        'title' => 'Unassigned Job',
+        'target' => 'Target A',
+        'bounty' => 5000,
+        'user_id' => null,
+        'status' => 'pending',
+    ]);
+
+    $ownAccepted = Contract::forceCreate([
+        'title' => 'Own Accepted Job',
+        'target' => 'Target B',
+        'bounty' => 10000,
+        'user_id' => $hitman1->id,
+        'status' => 'accepted',
+    ]);
+
+    $ownCompleted = Contract::forceCreate([
+        'title' => 'Own Completed Job',
+        'target' => 'Target C',
+        'bounty' => 15000,
+        'user_id' => $hitman1->id,
+        'status' => 'completed',
+    ]);
+
+    $otherAccepted = Contract::forceCreate([
+        'title' => 'Other Accepted Job',
+        'target' => 'Target D',
+        'bounty' => 20000,
+        'user_id' => $hitman2->id,
+        'status' => 'accepted',
+    ]);
+
+    $response = $this->actingAs($hitman1)->get(route('dashboard'));
+    $response->assertStatus(200);
+
+    $responseContracts = $response->viewData('contracts');
+    $this->assertCount(3, $responseContracts);
+    $this->assertTrue($responseContracts->contains($unassignedPending));
+    $this->assertTrue($responseContracts->contains($ownAccepted));
+    $this->assertTrue($responseContracts->contains($ownCompleted));
+    $this->assertFalse($responseContracts->contains($otherAccepted));
+});
